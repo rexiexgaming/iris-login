@@ -1,4 +1,6 @@
 .env
+.env.local
+.env.*.local
 firebase-service-account.json
 service-account*.json
 dist
@@ -6,3 +8,5 @@ node_modules
 node_modules/
 dist/
 build/
+.DS_Store
+
