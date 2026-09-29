@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS AI</title>
+  <link rel="icon" href="/logo.png" type="image/png">
+  <meta name="description" content="IRIS is a premium, client-side AI assistant designed to extract, analyze, and reply to queries from your specific PDF source securely.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- KaTeX CDN for Math Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body class="dark-theme">
+  <!-- Glowing Background Orbs -->
+  <div class="glow-orb orb-primary"></div>
+  <div class="glow-orb orb-secondary"></div>
+  <div class="glow-orb orb-tertiary"></div>
+
+  <div class="app-container">
+    <section class="auth-screen" id="authScreen" aria-labelledby="authTitle">
+      <div class="auth-card glass-panel">
+        <img src="/logo.png" alt="IRIS" class="auth-logo">
+        <span class="auth-badge">Private workspace</span>
+        <h2 id="authTitle">Welcome to IRIS AI</h2>
+        <p class="auth-description">Log in to use the assistant, or create an account with an invitation code.</p>
+        <p id="authLoading" class="auth-message">Connecting to Firebase…</p>
+        <form id="authForm" class="auth-form hidden">
+          <label>Email<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters"></label>
+          <label id="authCodeField" class="hidden">One-time code<input name="oneTimeCode" type="text" autocomplete="off" placeholder="Invitation code"></label>
+          <button type="submit" class="auth-submit" id="authSubmit">Log in</button>
+          <p id="authMessage" class="auth-message" role="status"></p>
+          <p class="auth-switch"><span id="authModeLabel">Need an account?</span> <button type="button" id="authModeToggle">Create account</button></p>
+        </form>
+      </div>
+    </section>
+
+    <div id="protectedApp" class="hidden">
+    <!-- Header Component -->
+    <div class="main-header">
+      <div class="logo-area">
+        <div class="logo-icon-wrapper">
+          <img src="/logo.png" alt="IRIS" style="width: 38px; height: 38px; object-fit: contain;">
+        </div>
+        <div class="logo-text">
+          <h1>IRIS AI</h1>
+          <p class="logo-tagline">Ninja Medical Squad</p>
+        </div>
+      </div>
+      <div class="header-user-panel">
+        <div class="usage-pill" id="usagePill">0 / 25 messages today</div>
+        <span class="user-email" id="userEmail"></span>
+        <button class="sign-out-btn" id="signOutButton" type="button">Log out</button>
+      </div>
+    </div>
+    <!-- Interactive Workspace View -->
+    <div class="workspace-container" id="workspaceView">
+      
+      <!-- AI Chat Assistant (full width) -->
+      <main class="chat-panel glass-panel">
+        <!-- Chat Toolbar -->
+        <div class="chat-toolbar">
+          <div class="chat-toolbar-left" style="display: flex; align-items: center; gap: 0.5rem;">
+            <img src="/logo.png" alt="IRIS Logo" style="height: 24px; width: 24px; object-fit: contain;">
+            <span class="chat-toolbar-label">IRIS AI Chat</span>
+            <div id="modelIndicator" class="model-indicator">
+              <span class="model-dot" id="modelDot"></span>
+            </div>
+          </div>
+          <div class="chat-toolbar-actions">
+            <button class="icon-btn-sm tooltip-btn" id="clearChatBtn" data-tooltip="Clear chat history" aria-label="Clear chat">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Message Area -->
+        <div class="chat-messages-container" id="chatMessages">
+          <div class="system-welcome-message glass-panel">
+            <div class="welcome-ai-avatar">
+              <div class="logo-icon-iris size-sm"></div>
+            </div>
+            <div class="welcome-text">
+              <h3>Hello, I'm IRIS</h3>
+              <p>I have successfully parsed and indexed <strong id="welcomeDocName">document.pdf</strong>. I am fully ready to answer questions, compile reports, or locate specific sections for you.</p>
+              
+              <div id="aiLoadingContainer" class="hidden" style="margin-top: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <div class="progress-spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>
+                  <span id="aiLoadingStatus" style="font-size: 0.9rem; color: var(--text-secondary);">Preparing document stream...</span>
+                </div>
+                <div class="progress-bar-container" style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; overflow: hidden;">
+                  <div class="progress-bar-fill" id="aiLoadingBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%); transition: width 0.15s ease;"></div>
+                </div>
+              </div>
+
+              <div class="suggested-prompts-container">
+                <button class="suggest-chip">Define a Granuloma</button>
+                <button class="suggest-chip">Compare between acute and chronic inflammation</button>
+                <button class="suggest-chip">List the three successive phases of Bilharzial granuloma formation.</button>
+                <button class="suggest-chip">What are types of cellular adaptation</button>
+                <button class="suggest-chip">What are uses of atropine</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="chat-input-area">
+          
+          <form class="chat-form" id="chatForm">
+            <textarea id="chatInput" rows="1" placeholder="Ask IRIS about the document..." required></textarea>
+            
+            <div class="chat-actions">
+              <span class="token-usage-indicator" id="tokenUsage">0 tokens used</span>
+              <button type="submit" class="send-btn" id="sendBtn" aria-label="Send query">
+                <i data-lucide="send"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    </div>
+  </div>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@0.441.0/dist/umd/lucide.min.js"></script>
+
+  <script>
+    // Initialize Lucide icons as soon as the library is available
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
+
+  <!-- Core Script Imports -->
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>
