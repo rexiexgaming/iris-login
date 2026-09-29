@@ -163,7 +163,8 @@ class IrisApp {
     const isPdfPathConfigured = Boolean(CONFIG.pdfPath);
     if (!isPdfPathConfigured) return;
 
-    const docName = CONFIG.pdfDisplayName || CONFIG.pdfPath.split('/').pop();
+    const docName = CONFIG.pdfDisplayName || CONFIG.pdfPath.split('/').pop().split('?')[0] || 'Document.pdf';
+
     this.isDocumentLoading = true;
     this.updateChatAvailability();
 
